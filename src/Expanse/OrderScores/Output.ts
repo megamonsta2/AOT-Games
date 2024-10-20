@@ -46,11 +46,6 @@ async function Log(Type: string, Players: Map<string, Player>, file: string) {
       GetScore(player.TitanTraining),
     ];
 
-    if (id == "arindryn241") {
-      console.log(player);
-      console.log(LogData);
-    }
-
     // Append to log file
     await appendFile(file, LogData.join(",") + "\n");
   }
