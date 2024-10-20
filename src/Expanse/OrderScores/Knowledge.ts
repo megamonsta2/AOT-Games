@@ -4,7 +4,6 @@ import {
   GetPlayer,
   GetMissingPlayer,
   GetIdFromUsername,
-  FindInvalidPlayer,
   CheckScoreForErrors,
   WaitForKey,
   ReadFile,
@@ -73,12 +72,6 @@ async function ProcessData() {
       // Player exists as AT
       PlayerObj.AddKnowledge(score);
     } else {
-      const LogPlayer = await FindInvalidPlayer(name);
-      console.log(`Log player: ${LogPlayer}`);
-      if (!LogPlayer) {
-        continue;
-      }
-
       let MissingPlayer = GetMissingPlayer(name);
       if (!MissingPlayer) {
         MissingPlayer = AddMissingPlayer(name);

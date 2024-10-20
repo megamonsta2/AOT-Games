@@ -5,6 +5,7 @@ import { index as GetKnowledge } from "./Knowledge.js";
 import { index as GetPractical } from "./Practical.js";
 import { index as GetTitanTraining } from "./TitanTraining.js";
 import { index as GetBonusPoints } from "./BonusPoints.js";
+import { index as Validate } from "./Validate.js";
 import { index as Output } from "./Output.js";
 
 // Module Setup
@@ -21,5 +22,7 @@ export async function index() {
   console.log("Gotten titan training scores.");
   await GetBonusPoints();
   console.log("Gotten bonus points.");
+
+  await Validate();
   await Output();
 }

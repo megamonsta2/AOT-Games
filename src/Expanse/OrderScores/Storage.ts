@@ -9,18 +9,6 @@ export enum Practical {
   Speed = "Speed",
   Dummies = "Dummies",
 }
-type PlayerJSON = {
-  name: string;
-  id: number;
-};
-type GroupJSON = {
-  group: {
-    id: number;
-  };
-  role: {
-    id: number;
-  };
-}[];
 
 // Variables
 let Players: Map<string, Player> = new Map<string, Player>();
@@ -120,195 +108,16 @@ export function AddMissingPlayer(username: string) {
   return MissingPlayer;
 }
 
+export function RemoveMissingPlayer(username: string) {
+  Missing.delete(GetIdFromUsername(username));
+}
+
 export function GetIdFromUsername(username: string): string {
   return username.toLowerCase();
 }
 
-// Check Functions
-
-// If player doesn't exist, return true
-// If player not in group, return true
-// If player in group and lower rank, return false
-export async function FindInvalidPlayer(Id: string): Promise<boolean> {
-  // Check if they exist on roblox
-  const UserId: number | undefined = await CheckPlayerExists(Id);
-
-  // If user id wasn't found, player doesn't exist, so return true
-  if (!UserId) {
-    return true;
-  }
-
-  // Check if they are in group but lower rank (e.g. died)
-  const PlayerInGroup = await CheckPlayerInGroup(UserId);
-
-  // If player not found in group, return true
-  if (!PlayerInGroup) {
-    return true;
-  }
-
-  return false;
-}
-
-async function CheckPlayerExists(Id: string): Promise<number | undefined> {
-  const URL = `https://users.roblox.com/v1/usernames/users`;
-
-  try {
-    // Get response
-    const response = await fetch(URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ usernames: [Id] }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
-    const ParsedResult: PlayerJSON[] | [] = JSON.parse(
-      await response.text()
-    ).data;
-
-    // Check if returned player is same as input player
-    if (ParsedResult.length > 0) {
-      // Player found
-      const PlayerData = ParsedResult[0];
-      if (PlayerData.name.toLowerCase() === Id) {
-        // Return user id
-        return PlayerData.id;
-      } else {
-        // Return nothing, invalid player
-        return;
-      }
-    } else {
-      // Player not found
-      return;
-    }
-  } catch (error) {
-    console.error("Error fetching data:", error);
-  }
-
-  return;
-}
-
-async function CheckPlayerInGroup(UserId: number): Promise<boolean> {
-  const CurrentURL = `https://groups.roblox.com/v1/users/${UserId}/groups/roles`;
-
-  try {
-    // Get response
-    const response = await fetch(CurrentURL);
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
-    const ParsedResult: GroupJSON = JSON.parse(await response.text()).data;
-
-    // Check if player is found
-    for (let i = 0; i < ParsedResult.length; i++) {
-      // Get username
-      const CurrentGroup = ParsedResult[i];
-      const GroupId = CurrentGroup.group.id;
-      const RoleId = CurrentGroup.role.id;
-
-      // Group found
-      if (String(GroupId) == GROUP_ID) {
-        if (String(RoleId) == ROLE_ID) {
-          // AT role
-          console.warn(
-            `The player with the id ${UserId} is of AT rank, but wasn't caught when getting Usernames.`
-          );
-        } else {
-          // Not AT, probably died
-          return true;
-        }
-      }
-    }
-  } catch (error) {
-    console.error("Error fetching data:", error);
-  }
-
-  // Group never found, not in group
-  return false;
-}
-
-export function CheckScoreForErrors(
-  index: number,
-  score: number,
-  max: number
-): boolean {
-  if (isNaN(score)) {
-    console.warn(`The score on line ${index} is not a number.`);
-    return false;
-  } else if (!Number.isInteger(score)) {
-    console.warn(
-      `The score on line ${index} is not an integer (whole number).`
-    );
-    return false;
-  } else if (score > max) {
-    console.warn(
-      `The score on line ${index} is greater than the maximum score (${max})`
-    );
-    return false;
-  } else if (score < 0) {
-    console.warn(`The score on line ${index} is less than 0.`);
-    return false;
-  }
-
-  return true;
-}
-
 // Other Functions
-export function WaitForKey(): Promise<void> {
-  return new Promise((resolve) => {
-    // Get interface
-    const rl = createInterface({
-      input: process.stdin,
-      output: process.stdout,
-    });
-
-    // Once a key is pressed, close then resolve
-    process.stdin.once("data", () => {
-      rl.close();
-      resolve();
-    });
-  });
-}
-
-export async function AddRegexScore(
-  file: string,
-  max: number,
-  func: (player: Player, score: number) => void
-) {
-  const Scores = await GetData(file, max);
-
-  Scores.forEach(async (data) => {
-    const name = data.Name;
-    const score = data.Score;
-    const Id = GetIdFromUsername(name);
-    const player = GetPlayer(Id);
-
-    if (player) {
-      // Player exists as AT
-      func(player, score);
-    } else {
-      // Check if player should be logged
-      const LogPlayer = await FindInvalidPlayer(name);
-      if (!LogPlayer) {
-        return;
-      }
-
-      // If should be logged, create obj
-      let MissingPlayer = GetMissingPlayer(name);
-      if (!MissingPlayer) {
-        MissingPlayer = AddMissingPlayer(name);
-      }
-
-      // Run score func
-      func(MissingPlayer, score);
-    }
-  });
-}
-
-async function GetData(file: string, max: number) {
+async function GetScores(file: string, max: number) {
   let CurrentInput = await ReadFile(file);
   let LinesToCheck: { [key: number]: true } = [];
   let Scores: { Name: string; Score: number }[] = [];
@@ -322,7 +131,7 @@ async function GetData(file: string, max: number) {
   while (true) {
     let AllValid = true;
 
-    for (const [key] of Object.entries(LinesToCheck)) {
+    for (const key in LinesToCheck) {
       // Get vars
       const index = Number(key);
       const line = CurrentInput[index];
@@ -375,6 +184,92 @@ async function GetData(file: string, max: number) {
   }
 
   return Scores;
+}
+
+export function CheckScoreForErrors(
+  index: number,
+  score: number,
+  max: number
+): boolean {
+  if (isNaN(score)) {
+    console.warn(`The score on line ${index} is not a number.`);
+    return false;
+  } else if (!Number.isInteger(score)) {
+    console.warn(
+      `The score on line ${index} is not an integer (whole number).`
+    );
+    return false;
+  } else if (score > max) {
+    console.warn(
+      `The score on line ${index} is greater than the maximum score (${max})`
+    );
+    return false;
+  } else if (score < 0) {
+    console.warn(`The score on line ${index} is less than 0.`);
+    return false;
+  }
+
+  return true;
+}
+
+export function WaitForKey(): Promise<void> {
+  return new Promise((resolve) => {
+    // Get interface
+    const rl = createInterface({
+      input: process.stdin,
+      output: process.stdout,
+    });
+
+    // Once a key is pressed, close then resolve
+    process.stdin.once("data", () => {
+      rl.close();
+      resolve();
+    });
+  });
+}
+
+export async function AddRegexScore(
+  file: string,
+  max: number,
+  func: (player: Player, score: number) => void
+) {
+  const Scores = await GetScores(file, max);
+  let Promises: Promise<void>[] = [];
+
+  for (let i = 0; i < Scores.length; i++) {
+    await LogPlayer(Scores[i], func);
+    // Promises.push(LogPlayer(Scores[i], func));
+  }
+
+  return Promise.all(Promises);
+}
+
+async function LogPlayer(
+  Score: { Name: string; Score: number },
+  func: (player: Player, score: number) => void
+) {
+  const name = Score.Name;
+  const score = Score.Score;
+  const Id = GetIdFromUsername(name);
+
+  // Check if player is AT
+  const player = GetPlayer(Id);
+  if (player) {
+    // Player exists as AT
+    func(player, score);
+    return;
+  }
+
+  // Check if has missing data
+  let MissingPlayer = GetMissingPlayer(name);
+  if (!MissingPlayer) {
+    MissingPlayer = AddMissingPlayer(name);
+  }
+
+  // Run func
+  func(MissingPlayer, score);
+
+  return;
 }
 
 export async function ReadFile(file: string): Promise<string[]> {
