@@ -12,11 +12,11 @@ export async function index() {
   console.log("Gotten usernames.");
   await GetKnowledge();
   console.log("Gotten knowledge scores.");
-  // await GetPractical();
-  // console.log("Gotten practical scores.");
-  // await GetTitanTraining();
-  // console.log("Gotten titan training scores.");
-  // await GetBonusPoints();
-  // console.log("Gotten bonus points.");
+  await GetPractical();
+  console.log("Gotten practical scores.");
+  await GetTitanTraining();
+  console.log("Gotten titan training scores.");
+  await GetBonusPoints();
+  console.log("Gotten bonus points.");
   await Output();
 }
