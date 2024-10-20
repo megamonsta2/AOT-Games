@@ -23,8 +23,8 @@ type GroupJSON = {
 }[];
 
 // Variables
-let Players: { [key: string]: Player } = {};
-let Missing: { [key: string]: Player } = {};
+let Players: Map<string, Player> = new Map<string, Player>();
+let Missing: Map<string, Player> = new Map<string, Player>();
 
 const FORMAT = "USERNAME - PATTERN";
 const REGEX_PATTERN = /([A-z0-9_]+) - ([0-9]+)/;
@@ -95,31 +95,23 @@ export function GetMissingPlayers() {
   return Missing;
 }
 
-export function GetPlayer(username: string): Player | null {
+export function GetPlayer(username: string): Player | undefined {
   let Id = GetIdFromUsername(username);
-  if (Id in Players) {
-    return Players[Id];
-  } else {
-    return null;
-  }
+  return Players.get(Id);
 }
 
-export function GetMissingPlayer(username: string): Player | null {
+export function GetMissingPlayer(username: string): Player | undefined {
   let Id = GetIdFromUsername(username);
-  if (Id in Missing) {
-    return Missing[Id];
-  } else {
-    return null;
-  }
+  return Missing.get(Id);
 }
 
 export function AddPlayer(username: string) {
-  Players[GetIdFromUsername(username)] = new Player(username);
+  Players.set(GetIdFromUsername(username), new Player(username));
 }
 
 export function AddMissingPlayer(username: string) {
   const MissingPlayer = new Player(username);
-  Missing[GetIdFromUsername(username)] = MissingPlayer;
+  Missing.set(GetIdFromUsername(username), MissingPlayer);
   return MissingPlayer;
 }
 

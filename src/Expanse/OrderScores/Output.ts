@@ -26,11 +26,7 @@ export function index() {
   ]);
 }
 
-async function Log(
-  Type: string,
-  Players: { [key: string]: Player },
-  file: string
-) {
+async function Log(Type: string, Players: Map<string, Player>, file: string) {
   // Clear data
   await writeFile(file, "");
 
@@ -38,9 +34,7 @@ async function Log(
   await appendFile(file, HEADER.join(",") + "\n");
 
   // Loop through players
-  for (const id in Players) {
-    const player = Players[id];
-
+  for (const [_, player] of Players) {
     // Get data
     const LogData = [
       player.Username,
