@@ -87,6 +87,11 @@ export class Player {
 }
 
 // Player Functions
+export function ResetPlayers() {
+  Players.clear();
+  Missing.clear();
+}
+
 export function GetPlayers() {
   return Players;
 }

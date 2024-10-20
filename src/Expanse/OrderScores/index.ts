@@ -1,4 +1,5 @@
 // Modules
+import { ResetPlayers } from "./Storage.js";
 import { index as GetUsernames } from "./Usernames.js";
 import { index as GetKnowledge } from "./Knowledge.js";
 import { index as GetPractical } from "./Practical.js";
@@ -8,6 +9,8 @@ import { index as Output } from "./Output.js";
 
 // Module Setup
 export async function index() {
+  ResetPlayers();
+
   await GetUsernames();
   console.log("Gotten usernames.");
   await GetKnowledge();
